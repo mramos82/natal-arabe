@@ -323,6 +323,62 @@ renderCatalog();
 
 const publicPlanner = 'https://mramos82.github.io/natal-arabe/';
 const suggestionPrefix = '#sugestao=';
+const compactPrefix = '#s=';
+const toToken = bytes => btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''))
+  .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const fromToken = token => Uint8Array.from(
+  atob(token.replace(/-/g,'+').replace(/_/g,'/')), ch => ch.charCodeAt(0)
+);
+function encodeCompact(snapshot) {
+  const [version,first,second,buffer,rows] = snapshot;
+  const bytes = [];
+  function write(number) {
+    while (number >= 128) {
+      bytes.push((number % 128) + 128);
+      number = Math.floor(number / 128);
+    }
+    bytes.push(number);
+  }
+  [version,first,second,buffer,rows.length].forEach(write);
+  for (const [id,qty,names] of rows) {
+    const item = byId.get(id);
+    const choices = item.groups.flatMap(group => group.options.map(option => option.name));
+    const indexes = names.map(name => choices.indexOf(name));
+    if (indexes.some(index => index < 0)) throw Error('Opção indisponível');
+    [id,qty,indexes.length,...indexes].forEach(write);
+  }
+  return toToken(bytes);
+}
+function decodeCompact(token) {
+  if (!/^[A-Za-z0-9_-]{1,60000}$/.test(token)) throw Error('Link inválido');
+  const bytes = fromToken(token);
+  let position = 0;
+  function read() {
+    let number = 0;
+    for (let scale = 1; scale <= 128 ** 4; scale *= 128) {
+      if (position >= bytes.length) break;
+      const byte = bytes[position++];
+      number += (byte % 128) * scale;
+      if (byte < 128) return number;
+    }
+    throw Error('Link incompleto');
+  }
+  const version = read(), first = read(), second = read(), buffer = read(), count = read();
+  if (count > 200) throw Error('Quantidade inválida');
+  const rows = [];
+  for (let index = 0; index < count; index++) {
+    const id = read(), qty = read(), size = read();
+    const item = byId.get(id);
+    const choices = item?.groups.flatMap(group => group.options.map(option => option.name));
+    if (!choices || size > choices.length) throw Error('Item inválido');
+    const names = Array.from({length:size}, () => choices[read()]);
+    if (names.includes(undefined)) throw Error('Opção inválida');
+    rows.push([id,qty,names]);
+  }
+  if (position !== bytes.length) throw Error('Link inválido');
+  return validateSuggestion([version,first,second,buffer,rows]);
+}
+
 function shareSnapshot() {
   const lines = allLines().map(({line}) => [line.id,line.qty,line.options]);
   return [1,state['24'].guests,state['25'].guests,margin,lines];
@@ -337,6 +393,9 @@ function decodeSuggestion(token) {
   const decoded = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(
     Uint8Array.from(atob(token.replace(/-/g,'+').replace(/_/g,'/')), ch => ch.charCodeAt(0))
   ));
+  return validateSuggestion(decoded);
+}
+function validateSuggestion(decoded) {
   if (!Array.isArray(decoded) || decoded.length !== 5) throw Error('Formato inválido');
   const [version,first,second,buffer,rows] = decoded;
   const quantity = n => Number.isInteger(n) && n >= 1 && n <= 999;
@@ -360,10 +419,13 @@ function decodeSuggestion(token) {
 }
 let pendingSuggestion;
 select('#share-plan').addEventListener('click', () => {
-  const token = encodeSuggestion(shareSnapshot());
+  const snapshot = shareSnapshot();
+  let fragment;
+  try { fragment = compactPrefix + encodeCompact(snapshot); }
+  catch { fragment = suggestionPrefix + encodeSuggestion(snapshot); }
   const field = select('#share-link');
   select('#share-status').textContent = '';
-  field.value = publicPlanner + suggestionPrefix + token;
+  field.value = publicPlanner + fragment;
   select('#share-dialog').showModal();
   field.select();
 });
@@ -378,9 +440,11 @@ select('#copy-share').addEventListener('click', async () => {
   }
 });
 function previewSuggestion() {
-  if (!location.hash.startsWith(suggestionPrefix)) return;
+  const compact = location.hash.startsWith(compactPrefix);
+  if (!compact && !location.hash.startsWith(suggestionPrefix)) return;
   try {
-    pendingSuggestion = decodeSuggestion(location.hash.slice(suggestionPrefix.length));
+    pendingSuggestion = compact ? decodeCompact(location.hash.slice(compactPrefix.length)) :
+      decodeSuggestion(location.hash.slice(suggestionPrefix.length));
   } catch {
     select('#save-status').textContent = 'Não foi possível abrir este link de sugestão.';
     return;
@@ -398,7 +462,7 @@ function previewSuggestion() {
 }
 select('#suggestion-dialog').addEventListener('close', () => {
   pendingSuggestion = undefined;
-  if (location.hash.startsWith(suggestionPrefix)) history.replaceState(null,'',location.pathname + location.search);
+  if (location.hash.startsWith(suggestionPrefix) || location.hash.startsWith(compactPrefix)) history.replaceState(null,'',location.pathname + location.search);
 });
 select('#apply-suggestion').addEventListener('click', () => {
   if (!pendingSuggestion) return;
