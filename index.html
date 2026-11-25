@@ -12,10 +12,14 @@
 .product{padding:.65rem .75rem}.product h3{font-size:1.12rem}.product .category{font-size:.8rem;margin-bottom:.16rem}.product p{margin:.2rem 0}.product details{margin:.25rem 0}.product summary{font-size:.87rem}.product .actions{gap:.3rem;margin-top:.35rem;align-items:end}.product button{font-size:.86rem;padding:.34rem .55rem}.product [data-packs]{width:4rem;padding:.25rem .35rem}.product [data-pack]{width:auto;padding:.2rem .45rem;margin-left:.35rem}.product .message:empty{display:none}.product .choices label{font-size:.85rem}.days .items{margin:.2rem 0}.days .items li{padding:.4rem 0}.days .items button{font-size:.86rem;padding:.22rem .5rem}.days .items input{padding:.2rem .4rem}.save-tools{margin-top:.65rem}.save-tools p{margin:0}
 
 #coverage,#days{margin-top:.8rem}.coverage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:.45rem;margin:.65rem 0}.coverage-grid div{background:var(--paper);border-radius:.4rem;padding:.45rem .55rem}.coverage-grid strong{display:block}.coverage-controls{display:flex;flex-wrap:wrap;gap:.6rem}.coverage-controls input,.coverage-controls select{display:block;width:6rem}.plan-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.25rem .65rem}.plan-line p{margin:.1rem 0}.plan-line .actions{justify-content:flex-end}.plan-line button{font-size:.84rem;padding:.26rem .45rem}.plan-line .muted{font-size:.9rem}.plan-line input{width:4rem;padding:.2rem .4rem}dialog{width:min(32rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--line);border-radius:.85rem;color:var(--ink);background:var(--white)}dialog::backdrop{background:#17181180}#editor-card{margin-top:.6rem}@media(max-width:480px){.plan-line{grid-template-columns:1fr}.plan-line .actions{justify-content:flex-start}}
+
+.share-dialog h2{font-size:1.6rem}.share-dialog .actions{margin-top:.7rem}.share-dialog textarea{display:block;width:100%;font:inherit;min-height:4rem}.share-dialog li{padding:.3rem 0}.share-dialog li small{display:block}
 </style>
 <header><div class="wrap hero"><strong>24 E 25 DE DEZEMBRO</strong><h1>Natal à mesa</h1><p>Cardápio da Muna Culinária Árabe para planejar os dois dias.</p><a href="https://munaculinariaarabe.com.br/munaculinariaarabe/menu?dd=menu">Ver cardápio oficial da Muna</a></div></header>
 <main class="wrap">
-<section aria-labelledby="planejamento"><h2 id="planejamento">Planejamento de Natal</h2><p class="section-note">Adicione os pratos do catálogo à lista de Natal. As edições ficam salvas no navegador de cada pessoa.</p><div class="actions save-tools"><button type="button" id="save-plan">Salvar planejamento</button><p id="save-status" class="muted" role="status"></p></div><div id="coverage"></div><div id="days"></div><dialog id="editor" aria-labelledby="editor-title"><div class="row"><h2 id="editor-title">Editar item</h2><button type="button" class="secondary" id="close-editor">Cancelar</button></div><div id="editor-card"></div></dialog></section>
+<section aria-labelledby="planejamento"><h2 id="planejamento">Planejamento de Natal</h2><p class="section-note">Adicione os pratos do catálogo à lista de Natal. As edições ficam salvas no navegador de cada pessoa.</p><div class="actions save-tools"><button type="button" id="save-plan">Salvar planejamento</button><button type="button" class="secondary" id="share-plan">Compartilhar minha versão</button><p id="save-status" class="muted" role="status"></p></div><div id="coverage"></div><div id="days"></div>
+<dialog id="share-dialog" class="share-dialog"><h2 id="share-title">Compartilhar minha versão</h2><p>Envie este link para alguém conferir sua sugestão.</p><label>Link da sugestão<textarea id="share-link" readonly></textarea></label><div class="actions"><button id="copy-share">Copiar link</button><form method="dialog"><button class="secondary">Fechar</button></form></div><p id="share-status" role="status"></p></dialog>
+<dialog id="suggestion-dialog" class="share-dialog" aria-labelledby="suggestion-title"><h2 id="suggestion-title">Sugestão de Natal</h2><div id="suggestion-content"></div><div class="actions"><button id="apply-suggestion">Usar esta versão</button><form method="dialog"><button class="secondary">Manter minha versão</button></form></div></dialog><dialog id="editor" aria-labelledby="editor-title"><div class="row"><h2 id="editor-title">Editar item</h2><button type="button" class="secondary" id="close-editor">Cancelar</button></div><div id="editor-card"></div></dialog></section>
 <section aria-labelledby="referencias"><h2 id="referencias">Sugestões da Muna</h2><p class="section-note">A Muna sugere 3 a 4 esfihas padrão ou 4 a 5 minis por pessoa, conforme o grupo e os acompanhamentos.</p><div id="refs" class="grid"></div></section>
 <section aria-labelledby="catalogo"><h2 id="catalogo">Catálogo completo</h2>
 <div class="toolbar"><label>Buscar prato ou ingrediente<input type="search" id="search" placeholder="Ex.: homus, kafta ou pistache"></label><label>Categoria<select id="category"><option value="">Todas as categorias</option></select></label></div>
@@ -316,5 +320,97 @@ select('#days').addEventListener('click', event => {
 });
 renderDays();
 renderCatalog();
+
+const publicPlanner = 'https://mramos82.github.io/natal-arabe/';
+const suggestionPrefix = '#sugestao=';
+function shareSnapshot() {
+  const lines = allLines().map(({line}) => [line.id,line.qty,line.options]);
+  return [1,state['24'].guests,state['25'].guests,margin,lines];
+}
+function encodeSuggestion(snapshot) {
+  const bytes = new TextEncoder().encode(JSON.stringify(snapshot));
+  return btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeSuggestion(token) {
+  if (!/^[A-Za-z0-9_-]{1,60000}$/.test(token)) throw Error('Link inválido');
+  const decoded = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(
+    Uint8Array.from(atob(token.replace(/-/g,'+').replace(/_/g,'/')), ch => ch.charCodeAt(0))
+  ));
+  if (!Array.isArray(decoded) || decoded.length !== 5) throw Error('Formato inválido');
+  const [version,first,second,buffer,rows] = decoded;
+  const quantity = n => Number.isInteger(n) && n >= 1 && n <= 999;
+  if (version !== 1 || !quantity(first) || !quantity(second) || ![20,25,30].includes(buffer) ||
+      !Array.isArray(rows) || rows.length > 200) throw Error('Versão inválida');
+  const lines = rows.map(row => {
+    if (!Array.isArray(row) || row.length !== 3) throw Error('Item inválido');
+    const [id,qty,names] = row;
+    const item = byId.get(id);
+    if (!item || !quantity(qty) || !Array.isArray(names) || new Set(names).size !== names.length ||
+        names.some(n => typeof n !== 'string')) throw Error('Item inválido');
+    const options = item.groups.flatMap(group => {
+      const choices = group.options.filter(option => names.includes(option.name));
+      if (choices.length < group.min || choices.length > group.max) throw Error('Opções inválidas');
+      return choices;
+    });
+    if (options.length !== names.length) throw Error('Opções inválidas');
+    return {id,qty,name:item.name,options:options.map(option => option.name),price:priceFor(item,options)};
+  });
+  return {first,second,buffer,lines};
+}
+let pendingSuggestion;
+select('#share-plan').addEventListener('click', () => {
+  const token = encodeSuggestion(shareSnapshot());
+  const field = select('#share-link');
+  select('#share-status').textContent = '';
+  field.value = publicPlanner + suggestionPrefix + token;
+  select('#share-dialog').showModal();
+  field.select();
+});
+select('#copy-share').addEventListener('click', async () => {
+  const field = select('#share-link');
+  try {
+    await navigator.clipboard.writeText(field.value);
+    select('#share-status').textContent = 'Link copiado.';
+  } catch {
+    field.select();
+    select('#share-status').textContent = 'Copie o link selecionado.';
+  }
+});
+function previewSuggestion() {
+  if (!location.hash.startsWith(suggestionPrefix)) return;
+  try {
+    pendingSuggestion = decodeSuggestion(location.hash.slice(suggestionPrefix.length));
+  } catch {
+    select('#save-status').textContent = 'Não foi possível abrir este link de sugestão.';
+    return;
+  }
+  const {first,second,buffer,lines} = pendingSuggestion;
+  const total = lines.reduce((sum,line) => sum + line.price * line.qty,0);
+  select('#suggestion-content').innerHTML =
+    '<p>' + first + ' pessoas na ceia · ' + second + ' no dia seguinte · ' + buffer + '% de margem</p>' +
+    '<p><strong>' + format(total) + '</strong> · ' + lines.length + ' seleções</p>' +
+    '<ul class="items">' + lines.map(line => '<li><strong>' + line.qty + ' × ' + escape(line.name) +
+      '</strong><small>' + escape(line.options.join(' · ')) + '</small></li>').join('') +
+    '</ul><p>Usar esta versão substitui sua lista atual neste navegador.</p>';
+  const dialog = select('#suggestion-dialog');
+  if (!dialog.open) dialog.showModal();
+}
+select('#suggestion-dialog').addEventListener('close', () => {
+  pendingSuggestion = undefined;
+  if (location.hash.startsWith(suggestionPrefix)) history.replaceState(null,'',location.pathname + location.search);
+});
+select('#apply-suggestion').addEventListener('click', () => {
+  if (!pendingSuggestion) return;
+  const {first,second,buffer,lines} = pendingSuggestion;
+  state['24'] = {guests:first,lines};
+  state['25'] = {guests:second,lines:[]};
+  state.settings.margin = margin = buffer;
+  save();
+  renderDays();
+  select('#suggestion-dialog').close();
+});
+window.addEventListener('hashchange',previewSuggestion);
+previewSuggestion();
 </script>
 </html>
