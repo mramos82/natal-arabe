@@ -62,7 +62,13 @@ try {
   else state['25'].guests = 7;
 } catch {}
 state.settings = {margin,revision:planRevision};
-if (savedRevision < planRevision) {
+const previousPlanSignature = ["[10743352,1,[\"Salada de Trigo Agridoce - 500g\"]]","[12320505,1,[\"Cuscuz Marroquino com Pernil - 750g\"]]","[13380541,1,[\"Frango ao molho de tahine - 750g\"]]","[8786246,1,[\"Mini - Esfiha 12 unidades\",\"Aberta\"]]","[8786328,1,[\"Mini - Esfiha 12 unidades\",\"Fechada\"]]","[8786331,1,[\"Mini - Esfiha 12 unidades\",\"Fechada\"]]","[8786393,1,[\"Pastas - 500g\"]]","[8786394,1,[\"Pastas - 500g\"]]","[8786395,1,[\"Pastas - 500g\"]]","[8786396,1,[\"Pastas - 500g\"]]","[8786400,1,[\"Tabule - 500g\"]]","[8786408,2,[\"Kafta Quadrada 80g cada - 6 unidades\"]]","[8786413,1,[\"Arroz com Lentilha - 500g\"]]","[8786415,1,[\"Arroz com Aletria - 500g\"]]","[8786417,2,[\"Frio\"]]","[8786418,2,[]]","[8857999,1,[\"Falafel Mini - 16 unidades\"]]","[9856767,1,[\"8 pedaços\"]]"];
+const savedPlanSignature = JSON.stringify(allSavedLineSignatures());
+function allSavedLineSignatures() {
+  return ['24','25'].flatMap(day => state[day].lines.map(line =>
+    JSON.stringify([line.id,line.qty,line.options]))).sort();
+}
+if (savedRevision < planRevision && savedPlanSignature === JSON.stringify(previousPlanSignature)) {
   for (const day of ['24','25']) state[day].lines = state[day].lines.filter(line => line.id !== 13380541);
   const matchingDay = ['24','25'].find(day => state[day].lines.some(line =>
     line.id === 8786328 && line.options.some(option => option.startsWith('Mini'))));
