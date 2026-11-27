@@ -14,6 +14,7 @@
 #coverage,#days{margin-top:.8rem}.coverage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:.45rem;margin:.65rem 0}.coverage-grid div{background:var(--paper);border-radius:.4rem;padding:.45rem .55rem}.coverage-grid strong{display:block}.coverage-controls{display:flex;flex-wrap:wrap;gap:.6rem}.coverage-controls input,.coverage-controls select{display:block;width:6rem}.plan-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.25rem .65rem}.plan-line p{margin:.1rem 0}.plan-line .actions{justify-content:flex-end}.plan-line button{font-size:.84rem;padding:.26rem .45rem}.plan-line .muted{font-size:.9rem}.plan-line input{width:4rem;padding:.2rem .4rem}dialog{width:min(32rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--line);border-radius:.85rem;color:var(--ink);background:var(--white)}dialog::backdrop{background:#17181180}#editor-card{margin-top:.6rem}@media(max-width:480px){.plan-line{grid-template-columns:1fr}.plan-line .actions{justify-content:flex-start}}
 
 .share-dialog h2{font-size:1.6rem}.share-dialog .actions{margin-top:.7rem}.share-dialog textarea{display:block;width:100%;font:inherit;min-height:4rem}.share-dialog li{padding:.3rem 0}.share-dialog li small{display:block}
+.plan-group h4{margin:.75rem 0 .2rem;padding:.25rem .5rem;border-radius:.3rem;background:var(--paper);color:var(--green);font-size:.88rem}.plan-group .items{margin:.15rem 0}
 </style>
 <header><div class="wrap hero"><strong>24 E 25 DE DEZEMBRO</strong><h1>Natal à mesa</h1><p>Cardápio da Muna Culinária Árabe para planejar os dois dias.</p><a href="https://munaculinariaarabe.com.br/munaculinariaarabe/menu?dd=menu">Ver cardápio oficial da Muna</a></div></header>
 <main class="wrap">
@@ -47,16 +48,32 @@ for (const item of products) {
 const cardsById = new Map(catalog.map(card => [card.variants[0].id, card]));
 const money = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
 const key = 'planejador-natal-muna-v1';
-const state = {"24":{"guests":10,"lines":[{"id":8786246,"name":"Carne - 12 unidades","options":["Mini - Esfiha 12 unidades","Aberta"],"price":8800,"qty":1},{"id":8786331,"name":"Queijo com Zaatar e Azeitona Preta - 12 unidades","options":["Mini - Esfiha 12 unidades","Fechada"],"price":8800,"qty":1},{"id":8786328,"name":"Queijo com Zaatar - 12 unidades","options":["Mini - Esfiha 12 unidades","Fechada"],"price":8800,"qty":1},{"id":8786396,"name":"Homus","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786395,"name":"Coalhada Seca","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786394,"name":"Babaganuche","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786393,"name":"Muhamara","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786417,"name":"Pacote Pão Sírio - 12 unidades","options":["Frio"],"price":2100,"qty":2},{"id":8786418,"name":"Mini Pão Caseiro - 12 unidades","options":[],"price":1200,"qty":2},{"id":10743352,"name":"Salada de trigo agridoce","options":["Salada de Trigo Agridoce - 500g"],"price":9000,"qty":1},{"id":8786400,"name":"Tabule","options":["Tabule - 500g"],"price":7000,"qty":1},{"id":8857999,"name":"Falafel","options":["Falafel Mini - 16 unidades"],"price":9800,"qty":1},{"id":12320505,"name":"Cuscuz Marroquino com Pernil","options":["Cuscuz Marroquino com Pernil - 750g"],"price":14250,"qty":1},{"id":8786415,"name":"Arroz com Aletria","options":["Arroz com Aletria - 500g"],"price":4500,"qty":1},{"id":8786408,"name":"Kafta Quadrada","options":["Kafta Quadrada 80g cada - 6 unidades"],"price":12000,"qty":2},{"id":8786413,"name":"Arroz com Lentilha","options":["Arroz com Lentilha - 500g"],"price":6000,"qty":1},{"id":13380541,"name":"Frango ao molho de tahine com arroz aletria","options":["Frango ao molho de tahine - 750g"],"price":13900,"qty":1},{"id":9856767,"name":"Kibe de Bandeja Assado","options":["8 pedaços"],"price":18700,"qty":1}]},"25":{"guests":7,"lines":[]}};
+const state = {"24":{"guests":10,"lines":[{"id":8786246,"name":"Carne - 12 unidades","options":["Mini - Esfiha 12 unidades","Aberta"],"price":8800,"qty":1},{"id":8786331,"name":"Queijo com Zaatar e Azeitona Preta - 12 unidades","options":["Mini - Esfiha 12 unidades","Fechada"],"price":8800,"qty":1},{"id":8786336,"name":"Alcachofra - 12 unidades","options":["Mini - Esfiha 12 unidades","Fechada"],"price":8800,"qty":1},{"id":8786396,"name":"Homus","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786395,"name":"Coalhada Seca","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786394,"name":"Babaganuche","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786393,"name":"Muhamara","options":["Pastas - 500g"],"price":7600,"qty":1},{"id":8786417,"name":"Pacote Pão Sírio - 12 unidades","options":["Frio"],"price":2100,"qty":2},{"id":8786418,"name":"Mini Pão Caseiro - 12 unidades","options":[],"price":1200,"qty":2},{"id":10743352,"name":"Salada de trigo agridoce","options":["Salada de Trigo Agridoce - 500g"],"price":9000,"qty":1},{"id":8786400,"name":"Tabule","options":["Tabule - 500g"],"price":7000,"qty":1},{"id":8857999,"name":"Falafel","options":["Falafel Mini - 16 unidades"],"price":9800,"qty":1},{"id":12320505,"name":"Cuscuz Marroquino com Pernil","options":["Cuscuz Marroquino com Pernil - 750g"],"price":14250,"qty":1},{"id":8786415,"name":"Arroz com Aletria","options":["Arroz com Aletria - 500g"],"price":4500,"qty":1},{"id":8786408,"name":"Kafta Quadrada","options":["Kafta Quadrada 80g cada - 6 unidades"],"price":12000,"qty":2},{"id":8786413,"name":"Arroz com Lentilha","options":["Arroz com Lentilha - 500g"],"price":6000,"qty":1},{"id":9856767,"name":"Kibe de Bandeja Assado","options":["8 pedaços"],"price":18700,"qty":1}]},"25":{"guests":7,"lines":[]}};
+const planRevision = 1;
+const artichoke = {"id":8786336,"name":"Alcachofra - 12 unidades","options":["Mini - Esfiha 12 unidades","Fechada"],"price":8800,"qty":1};
 let editing = null;
 let margin = 25;
+let savedRevision = planRevision;
 try {
   const saved = JSON.parse(localStorage.getItem(key));
+  if (saved) savedRevision = saved.settings?.revision ?? 0;
   for (const day of ['24','25']) if (saved?.[day]) state[day] = saved[day];
   if (saved?.settings) margin = saved.settings.margin ?? margin;
   else state['25'].guests = 7;
 } catch {}
-state.settings = {margin};
+state.settings = {margin,revision:planRevision};
+if (savedRevision < planRevision) {
+  for (const day of ['24','25']) state[day].lines = state[day].lines.filter(line => line.id !== 13380541);
+  const matchingDay = ['24','25'].find(day => state[day].lines.some(line =>
+    line.id === 8786328 && line.options.some(option => option.startsWith('Mini'))));
+  if (matchingDay) {
+    const lines = state[matchingDay].lines;
+    const index = lines.findIndex(line => line.id === 8786328 && line.options.some(option => option.startsWith('Mini')));
+    const cheese = lines[index];
+    lines.splice(index,1,...(cheese.qty > 1 ? [{...cheese,qty:cheese.qty-1}] : []),{...artichoke});
+  }
+  try { localStorage.setItem(key,JSON.stringify(state)); } catch {}
+}
 const select = selector => document.querySelector(selector);
 const format = cents => money.format(cents / 100);
 const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
@@ -130,7 +147,7 @@ function renderCoverage() {
 }
 function renderDays() {
   const entries = allLines();
-  const lines = entries.map(({day,index,line}) => {
+  const itemMarkup = ({day,index,line}) => {
     const portion = portionStats(line);
     return `<li class="plan-line"><div><strong>${escape(line.name)}</strong>
       <p class="muted">${escape(line.options.join(' · '))}${portion.grams ? ' · ' + (portion.estimated ? '≈ ' : '') + weight(portion.grams) : ''}</p></div>
@@ -138,10 +155,16 @@ function renderDays() {
       <strong>${format(line.qty * line.price)}</strong>
       <button class="secondary" data-day="${day}" data-edit="${index}" aria-label="Editar ${escape(line.name)}">Editar</button>
       <button class="secondary" data-day="${day}" data-remove="${index}" aria-label="Remover ${escape(line.name)}">Remover</button></div></li>`;
+  };
+  const sections = [[4,'Entradas e pães'],[3,'Pastas'],[1,'Saladas'],[0,'Pratos principais'],[2,'Arroz e cuscuz'],[5,'Outros']];
+  const lines = sections.map(([group,title]) => {
+    const items = entries.filter(({line}) => portionStats(line).group === group);
+    return items.length ? '<div class="plan-group"><h4>' + title + '</h4><ul class="items">' +
+      items.map(itemMarkup).join('') + '</ul></div>' : '';
   }).join('');
   const amount = entries.reduce((sum,{line}) => sum + line.price * line.qty,0);
   select('#days').innerHTML = `<article class="card"><div class="row"><h3>Itens de Natal</h3><strong class="price">${format(amount)}</strong></div>
-    ${lines ? `<ul class="items">${lines}</ul>` : '<p class="muted">Nenhum prato selecionado.</p>'}</article>`;
+    ${lines || '<p class="muted">Nenhum prato selecionado.</p>'}</article>`;
   renderCoverage();
 }
 function choiceMarkup(group, index) {
